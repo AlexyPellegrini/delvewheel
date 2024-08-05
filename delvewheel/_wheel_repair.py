@@ -116,6 +116,7 @@ class WheelRepair:
     _whl_path: str  # path to wheel
     _whl_name: str  # name of wheel
     _distribution_name: str
+    _mangle_as: str # If not "", replaces _distribution_name when mangling DLLs
     _version: str  # wheel version
     _extract_dir_obj: typing.Optional[tempfile.TemporaryDirectory]  # wheel extraction directory object
     _extract_dir: str  # wheel extraction directory
@@ -272,7 +273,8 @@ class WheelRepair:
     def _hashfile(self, afile: typing.BinaryIO, blocksize: int = 65536, length: int = 32) -> str:
         """Hash the contents of an open file handle with SHA256. Return the
         first length characters of the hash."""
-        hasher = hashlib.sha256(self._distribution_name.encode())
+        name = self._mangle_as if self._mangle_as != "" else self._distribution_name
+        hasher = hashlib.sha256(name.encode())
         buf = afile.read(blocksize)
         while len(buf) > 0:
             hasher.update(buf)
@@ -691,6 +693,7 @@ class WheelRepair:
             target: str,
             no_mangles: set,
             no_mangle_all: bool,
+            mangle_as: str,
             strip: bool,
             lib_sdir: str,
             log_diagnostics: bool,
@@ -719,6 +722,8 @@ class WheelRepair:
         if repair_version:
             print(f'Delvewheel {repair_version} has already repaired this wheel.')
             return
+
+        self._mangle_as = mangle_as
 
         # find dependencies
         print('finding DLL dependencies')
